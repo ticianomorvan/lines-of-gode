@@ -15,16 +15,3 @@ jobs:
         goarch: amd64
         md5sum: false
         extra_files: LICENSE.md README.md
-  release-windows-amd64:
-    name: Release windows/amd64
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - run: echo "CGO_ENABLED=1" >> ${GITHUB_ENV}
-    - uses: wangyoucao577/go-release-action@v1.30
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        goos: windows
-        goarch: amd64
-        md5sum: false
-        extra_files: LICENSE.md README.md
