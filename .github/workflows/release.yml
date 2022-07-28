@@ -18,10 +18,11 @@ jobs:
             goos: windows
     steps:
     - uses: actions/checkout@v3
+    - uses: egor-tensin/setup-gcc@v1
     - uses: wangyoucao577/go-release-action@v1.30
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
-        goversion: "https://dl.google.com/go/go1.18.4.linux-amd64.tar.gz"
+        build_flags: CGO_ENABLED=1
         extra_files: LICENSE.md README.md
