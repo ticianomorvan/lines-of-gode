@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -54,7 +55,7 @@ func CreateClient(token string) (context.Context, *github.Client) {
 // Credentials
 
 func GetCredentials() Credentials {
-	file, err := os.ReadFile("credentials.toml")
+	file, err := ioutil.ReadFile("credentials.toml")
 	CheckError(err)
 
 	var credentials Credentials
@@ -71,7 +72,7 @@ func SaveCredentials(token string) {
 	currentDirectory, err := os.Getwd()
 	CheckError(err)
 
-	err = os.WriteFile(filename, []byte(content), 0666)
+	err = ioutil.WriteFile(filename, []byte(content), 0666)
 	CheckError(err)
 
 	fmt.Printf("Your personal access token has been stored at %s/%s\n", currentDirectory, filename)
