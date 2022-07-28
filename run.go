@@ -67,11 +67,8 @@ var Run cli.Command = cli.Command{
 				if CheckAuthor(user, commit.GetAuthor().GetLogin()) {
 					sha := commit.GetSHA()
 
-					if isStored(db, sha) {
-						storedCommit := GetCommitById(db, sha)
-						commitStats.Additions += storedCommit.Additions
-						commitStats.Deletions += storedCommit.Deletions
-					} else {
+					storedCommit, err := GetCommitBySha(db, sha)
+					if err != nil {
 						files := GetCommitInfo(context, client, user, repository.GetName(), sha).Files
 
 						for _, file := range files {
@@ -81,7 +78,10 @@ var Run cli.Command = cli.Command{
 							}
 						}
 
-						InsertCommit(db, sha, commitStats.Additions, commitStats.Deletions)
+						defer InsertCommit(db, sha, commitStats.Additions, commitStats.Deletions)
+					} else {
+						commitStats.Additions += storedCommit.Additions
+						commitStats.Deletions += storedCommit.Deletions
 					}
 				}
 				repositoryStats.Additions += commitStats.Additions

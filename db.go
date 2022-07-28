@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -62,19 +63,13 @@ func ReadCommits(db *sql.DB) []Commit {
 	return all
 }
 
-func GetCommitById(db *sql.DB, sha string) Commit {
+func GetCommitBySha(db *sql.DB, sha string) (*Commit, error) {
 	row := db.QueryRow("SELECT * FROM commits WHERE sha = ?", sha)
 
 	var commit Commit
 	if err := row.Scan(&commit.ID, &commit.Sha, &commit.Additions, &commit.Deletions); err != nil {
-		log.Fatal(err)
+		return nil, errors.New("the commit doesn't exist in database")
 	}
 
-	return commit
-}
-
-func isStored(db *sql.DB, sha string) bool {
-	commit := GetCommitById(db, sha)
-
-	return commit.ID != 0
+	return &commit, nil
 }
