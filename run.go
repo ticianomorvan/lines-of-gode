@@ -97,7 +97,7 @@ var Run cli.Command = cli.Command{
 
 		total = additions + deletions
 		fmt.Printf(
-			"You have added %d lines and deleted %d lines for a total of %d lines changed across %d repositories.",
+			"You have added %d lines and deleted %d lines for a total of %d lines changed across %d repositories.\n",
 			additions, deletions, total, len(repositories),
 		)
 
