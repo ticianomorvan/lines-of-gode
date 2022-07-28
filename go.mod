@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/BurntSushi/toml v1.2.0
 	github.com/google/go-github/v45 v45.2.0
+	github.com/mattn/go-sqlite3 v1.14.14
 	github.com/stretchr/testify v1.8.0
 	github.com/urfave/cli/v2 v2.11.1
 	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c
