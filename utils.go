@@ -119,11 +119,12 @@ func GetCommitInfo(ctx context.Context, client *github.Client, owner, repository
 
 func GetCommitFromDatabase(db *gorm.DB, sha string) (Commit, error) {
 	var commit Commit
-	result := db.First(&commit, "sha = ?", sha)
-
-	err := result.Error
-
-	return commit, err
+	if result := db.Where("sha = ?", sha).First(&commit); result.Error != nil {
+		log.Println("commit not found on database, will be added")
+		return commit, result.Error
+	} else {
+		return commit, result.Error
+	}
 }
 
 func InsertCommitInDatabase(db *gorm.DB, commit *Commit) {
