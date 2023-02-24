@@ -5,17 +5,22 @@ go 1.18
 require (
 	github.com/BurntSushi/toml v1.2.0
 	github.com/google/go-github/v45 v45.2.0
-	github.com/mattn/go-sqlite3 v1.14.14
+	github.com/google/go-github/v50 v50.1.0
 	github.com/stretchr/testify v1.8.0
 	github.com/urfave/cli/v2 v2.11.1
 	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c
+	gorm.io/gorm v1.24.5
 )
+
+require github.com/mattn/go-sqlite3 v1.14.15 // indirect
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
@@ -24,4 +29,5 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/driver/sqlite v1.4.4
 )

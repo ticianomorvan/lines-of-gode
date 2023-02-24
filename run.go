@@ -1,13 +1,22 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/urfave/cli/v2"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type Stats struct {
+	Additions int
+	Deletions int
+}
+
+type Commit struct {
+	gorm.Model
+	ID        int64
+	Sha       string
 	Additions int
 	Deletions int
 }
@@ -22,18 +31,6 @@ var exceptions []string = []string{
 	"node_modules",
 }
 
-/*
-"Run" is the main command of the CLI.
-It will scrap all the commits who's author is the authed user, and check for the
-additions and deletions of the non-excepted files (e.g.: package-lock.json)
-
-If the commit was previously checked, it will be read from a SQLite database, for
-performance improvements. If it's a new commit, it will be requested to GitHub and then
-stored in the database.
-
-This will be do to every repository where the user made a commit, getting a per-repository report
-and finally a general report of the user's contributions.
-*/
 var Run cli.Command = cli.Command{
 	Name:    "run",
 	Aliases: []string{"r"},
@@ -41,20 +38,68 @@ var Run cli.Command = cli.Command{
 	Action: func(ctx *cli.Context) error {
 		var additions, deletions, total int
 
-		db, err := sql.Open("sqlite3", "linesofgode.db")
+		db, err := gorm.Open(sqlite.Open("linesofgode.db"), &gorm.Config{})
 		CheckError(err)
 
-		defer db.Close()
-
-		CreateCommitsTable(db)
+		db.AutoMigrate(&Commit{})
 
 		token := GetToken()
 		context, client := CreateClient(token)
-		user := GetUser(context, client).GetLogin()
+		user := GetUser(context, client)
 
-		fmt.Printf("Hello %v!, fetching your repositories now...\n", user)
+		fmt.Printf("Hello %v!, fetching your repositories now...\n", user.GetLogin())
 
-		repositories := GetRepositories(context, client, user)
+		repositories := GetRepositories(context, client)
+
+		for _, repository := range repositories {
+			var repositoryStats = Stats{}
+
+			commits := GetCommits(
+				context,
+				client,
+				repository.GetOwner().GetLogin(),
+				user.GetLogin(),
+				repository.GetName(),
+			)
+
+			for _, commit := range commits {
+				var commitStats = Stats{}
+
+				sha := commit.GetSHA()
+
+				files := GetCommitInfo(
+					context,
+					client,
+					repository.GetOwner().GetLogin(),
+					repository.GetName(),
+					sha).Files
+				for _, file := range files {
+					if !CheckExceptions(file.GetFilename(), exceptions) {
+						commitStats.Additions += file.GetAdditions()
+						commitStats.Deletions += file.GetDeletions()
+						}
+					}
+					repositoryStats.Additions += commitStats.Additions
+					repositoryStats.Deletions += commitStats.Deletions
+				}
+
+				additions += repositoryStats.Additions
+				deletions += repositoryStats.Deletions
+				fmt.Printf("%v: +%v -%v\n", repository.GetFullName(), repositoryStats.Additions, repositoryStats.Deletions)
+			}
+		
+		total = additions + deletions
+
+		fmt.Printf(
+			"You added around %v lines and deleted around %v lines for a total of %v lines changed.\n",
+			additions, deletions, total,
+		)
+
+		return nil
+	},
+}
+
+		/*
 
 		for _, repository := range repositories {
 			var repositoryStats = Stats{}
@@ -104,3 +149,4 @@ var Run cli.Command = cli.Command{
 		return nil
 	},
 }
+*/

@@ -10,7 +10,6 @@ import (
 var Token string
 
 func main() {
-
 	app := &cli.App{
 		Name:  "lines-of-gode",
 		Usage: "Check how many lines of code you have contributed.",

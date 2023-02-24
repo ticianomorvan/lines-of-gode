@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/google/go-github/v45/github"
+	"github.com/google/go-github/v50/github"
 	"golang.org/x/oauth2"
 )
 
@@ -87,22 +87,30 @@ func GetUser(ctx context.Context, client *github.Client) *github.User {
 	return user
 }
 
-func GetRepositories(ctx context.Context, client *github.Client, user string) []*github.Repository {
-	repositories, _, err := client.Repositories.List(ctx, user, nil)
+func GetRepositories(ctx context.Context, client *github.Client) []*github.Repository {
+	repositories, _, err := client.Repositories.List(ctx, "", nil)
 	CheckError(err)
 
 	return repositories
 }
 
-func GetCommits(ctx context.Context, client *github.Client, user, repository string) []*github.RepositoryCommit {
-	commits, _, err := client.Repositories.ListCommits(ctx, user, repository, nil)
+func GetCommits(
+	ctx context.Context,
+	client *github.Client,
+	owner, user, repository string,
+) []*github.RepositoryCommit {
+	options := github.CommitsListOptions{
+		Author: user,
+	}
+
+	commits, _, err := client.Repositories.ListCommits(ctx, owner, repository, &options)
 	CheckError(err)
 
 	return commits
 }
 
-func GetCommitInfo(ctx context.Context, client *github.Client, user, repository, sha string) *github.RepositoryCommit {
-	commit, _, err := client.Repositories.GetCommit(ctx, user, repository, sha, nil)
+func GetCommitInfo(ctx context.Context, client *github.Client, owner, repository, sha string) *github.RepositoryCommit {
+	commit, _, err := client.Repositories.GetCommit(ctx, owner, repository, sha, nil)
 	CheckError(err)
 
 	return commit
