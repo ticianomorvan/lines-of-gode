@@ -8,15 +8,14 @@ import (
 	"gorm.io/gorm"
 )
 
-type Stats struct {
+type Commit struct {
+	gorm.Model
+	Sha       string
 	Additions int
 	Deletions int
 }
 
-type Commit struct {
-	gorm.Model
-	ID        int64
-	Sha       string
+type Stats struct {
 	Additions int
 	Deletions int
 }
@@ -66,27 +65,39 @@ var Run cli.Command = cli.Command{
 				var commitStats = Stats{}
 
 				sha := commit.GetSHA()
+				storedCommit, err := GetCommitFromDatabase(db, sha)
 
-				files := GetCommitInfo(
-					context,
-					client,
-					repository.GetOwner().GetLogin(),
-					repository.GetName(),
-					sha).Files
-				for _, file := range files {
-					if !CheckExceptions(file.GetFilename(), exceptions) {
-						commitStats.Additions += file.GetAdditions()
-						commitStats.Deletions += file.GetDeletions()
+				if err != nil {
+					files := GetCommitInfo(
+						context,
+						client,
+						repository.GetOwner().GetLogin(),
+						repository.GetName(),
+						sha).Files
+					for _, file := range files {
+						if !CheckExceptions(file.GetFilename(), exceptions) {
+							commitStats.Additions += file.GetAdditions()
+							commitStats.Deletions += file.GetDeletions()
 						}
 					}
-					repositoryStats.Additions += commitStats.Additions
-					repositoryStats.Deletions += commitStats.Deletions
+
+					InsertCommitInDatabase(db, &Commit{
+						Sha: sha,
+						Additions: commitStats.Additions,
+						Deletions: commitStats.Deletions,
+					})
+				} else {
+					commitStats.Additions += storedCommit.Additions
+					commitStats.Deletions += storedCommit.Deletions
 				}
 
-				additions += repositoryStats.Additions
-				deletions += repositoryStats.Deletions
-				fmt.Printf("%v: +%v -%v\n", repository.GetFullName(), repositoryStats.Additions, repositoryStats.Deletions)
+				repositoryStats.Additions += commitStats.Additions
+				repositoryStats.Deletions += commitStats.Deletions
 			}
+			additions += repositoryStats.Additions
+			deletions += repositoryStats.Deletions
+			fmt.Printf("%v: +%v -%v\n", repository.GetFullName(), repositoryStats.Additions, repositoryStats.Deletions)
+		}
 		
 		total = additions + deletions
 

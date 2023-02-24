@@ -11,6 +11,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-github/v50/github"
 	"golang.org/x/oauth2"
+	"gorm.io/gorm"
 )
 
 type Credentials struct {
@@ -114,6 +115,19 @@ func GetCommitInfo(ctx context.Context, client *github.Client, owner, repository
 	CheckError(err)
 
 	return commit
+}
+
+func GetCommitFromDatabase(db *gorm.DB, sha string) (Commit, error) {
+	var commit Commit
+	result := db.First(&commit, "sha = ?", sha)
+
+	err := result.Error
+
+	return commit, err
+}
+
+func InsertCommitInDatabase(db *gorm.DB, commit *Commit) {
+	db.Create(commit)
 }
 
 func GetToken() string {
