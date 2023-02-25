@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,16 +8,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/google/go-github/v50/github"
-	"golang.org/x/oauth2"
-	"gorm.io/gorm"
 )
-
-type Credentials struct {
-	Token string
-}
-
-// Check
 
 func CheckError(err error) {
 	if err != nil {
@@ -40,20 +30,9 @@ func CheckAuthor(user, author string) bool {
 	return user == author
 }
 
-// Github
-
-func CreateClient(token string) (context.Context, *github.Client) {
-	context := context.Background()
-	tokenSource := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-
-	httpClient := oauth2.NewClient(context, tokenSource)
-	client := github.NewClient(httpClient)
-	return context, client
+type Credentials struct {
+	Token string
 }
-
-// Credentials
 
 func GetCredentials() Credentials {
 	file, err := ioutil.ReadFile("credentials.toml")
@@ -77,58 +56,6 @@ func SaveCredentials(token string) {
 	CheckError(err)
 
 	fmt.Printf("Your personal access token has been stored at %s/%s\n", currentDirectory, filename)
-}
-
-// Getters
-
-func GetUser(ctx context.Context, client *github.Client) *github.User {
-	user, _, err := client.Users.Get(ctx, "")
-	CheckError(err)
-
-	return user
-}
-
-func GetRepositories(ctx context.Context, client *github.Client) []*github.Repository {
-	repositories, _, err := client.Repositories.List(ctx, "", nil)
-	CheckError(err)
-
-	return repositories
-}
-
-func GetCommits(
-	ctx context.Context,
-	client *github.Client,
-	owner, user, repository string,
-) []*github.RepositoryCommit {
-	options := github.CommitsListOptions{
-		Author: user,
-	}
-
-	commits, _, err := client.Repositories.ListCommits(ctx, owner, repository, &options)
-	CheckError(err)
-
-	return commits
-}
-
-func GetCommitInfo(ctx context.Context, client *github.Client, owner, repository, sha string) *github.RepositoryCommit {
-	commit, _, err := client.Repositories.GetCommit(ctx, owner, repository, sha, nil)
-	CheckError(err)
-
-	return commit
-}
-
-func GetCommitFromDatabase(db *gorm.DB, sha string) (Commit, error) {
-	var commit Commit
-	if result := db.Where("sha = ?", sha).First(&commit); result.Error != nil {
-		log.Println("commit not found on database, will be added")
-		return commit, result.Error
-	} else {
-		return commit, result.Error
-	}
-}
-
-func InsertCommitInDatabase(db *gorm.DB, commit *Commit) {
-	db.Create(commit)
 }
 
 func GetToken() string {

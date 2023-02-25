@@ -53,42 +53,32 @@ var Run cli.Command = cli.Command{
 		for _, repository := range repositories {
 			var repositoryStats = Stats{}
 
-			commits := GetCommits(
-				context,
-				client,
-				repository.GetOwner().GetLogin(),
-				user.GetLogin(),
-				repository.GetName(),
-			)
+			commits := GetCommits(&SetupGetCommits{
+				ctx: context,
+				client: client,
+				owner: repository.GetOwner().GetLogin(),
+				user: user.GetLogin(),
+				repository: repository.GetName(),
+			})
 
 			for _, commit := range commits {
 				var commitStats = Stats{}
 
 				sha := commit.GetSHA()
-				storedCommit, err := GetCommitFromDatabase(db, sha)
 
-				if err != nil {
-					files := GetCommitInfo(
-						context,
-						client,
-						repository.GetOwner().GetLogin(),
-						repository.GetName(),
-						sha).Files
-					for _, file := range files {
-						if !CheckExceptions(file.GetFilename(), exceptions) {
-							commitStats.Additions += file.GetAdditions()
-							commitStats.Deletions += file.GetDeletions()
-						}
+				files := GetCommitInfo(&SetupGetCommitInfo{
+					ctx: context,
+					client: client,
+					owner: repository.GetOwner().GetLogin(),
+					repository: repository.GetName(),
+					sha: sha,
+				}).Files
+
+				for _, file := range files {
+					if !CheckExceptions(file.GetFilename(), exceptions) {
+						commitStats.Additions += file.GetAdditions()
+						commitStats.Deletions += file.GetDeletions()
 					}
-
-					InsertCommitInDatabase(db, &Commit{
-						Sha: sha,
-						Additions: commitStats.Additions,
-						Deletions: commitStats.Deletions,
-					})
-				} else {
-					commitStats.Additions += storedCommit.Additions
-					commitStats.Deletions += storedCommit.Deletions
 				}
 
 				repositoryStats.Additions += commitStats.Additions
@@ -109,55 +99,3 @@ var Run cli.Command = cli.Command{
 		return nil
 	},
 }
-
-		/*
-
-		for _, repository := range repositories {
-			var repositoryStats = Stats{}
-
-			commits := GetCommits(context, client, user, repository.GetName())
-
-			for _, commit := range commits {
-				var commitStats = Stats{}
-
-				if CheckAuthor(user, commit.GetAuthor().GetLogin()) {
-					sha := commit.GetSHA()
-
-					storedCommit, err := GetCommitBySha(db, sha)
-					if err != nil {
-						files := GetCommitInfo(context, client, user, repository.GetName(), sha).Files
-
-						for _, file := range files {
-							if !CheckExceptions(file.GetFilename(), exceptions) {
-								commitStats.Additions += file.GetAdditions()
-								commitStats.Deletions += file.GetDeletions()
-							}
-						}
-
-						defer InsertCommit(db, sha, commitStats.Additions, commitStats.Deletions)
-					} else {
-						commitStats.Additions += storedCommit.Additions
-						commitStats.Deletions += storedCommit.Deletions
-					}
-				}
-				repositoryStats.Additions += commitStats.Additions
-				repositoryStats.Deletions += commitStats.Deletions
-			}
-			fmt.Printf(
-				"Repository: %q had %d additions and %d deletions\n",
-				repository.GetName(), repositoryStats.Additions, repositoryStats.Deletions,
-			)
-			additions += repositoryStats.Additions
-			deletions += repositoryStats.Deletions
-		}
-
-		total = additions + deletions
-		fmt.Printf(
-			"You have added %d lines and deleted %d lines for a total of %d lines changed across %d repositories.\n",
-			additions, deletions, total, len(repositories),
-		)
-
-		return nil
-	},
-}
-*/
